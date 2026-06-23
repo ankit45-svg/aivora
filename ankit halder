@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aivora - Advanced AI Video Studio</title>
+    <style>
+        :root {
+            --bg-color: #060913;
+            --sidebar-bg: #0d1222;
+            --card-bg: #121829;
+            --accent-color: #a855f7; /* Custom purple brand color for Aivora */
+            --accent-hover: #9333ea;
+            --reward-color: #10b981;
+            --pay-color: #ec4899;
+            --text-color: #f3f4f6;
+            --text-muted: #64748b;
+            --border-color: #1e293b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* AUTH SCREEN OVERLAY */
+        .auth-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-color);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .auth-card {
+            background-color: var(--sidebar-bg);
+            border: 1px solid var(--border-color);
+            padding: 40px 30px;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 20px 40px -15px rgba(0,0,0,0.7);
+            text-align: center;
+        }
+
+        /* LAYOUT HOOKS */
+        .app-container {
+            display: flex;
+            width: 100%;
+            height: 100vh;
+        }
+
+        /* SIDEBAR INTERFACE */
+        .sidebar {
+            width: 340px;
+            background-color: var(--sidebar-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 24px;
+            gap: 20px;
+            overflow-y: auto;
+            height: 100%;
+        }
+
+        .logo-area h1 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: linear-gradient(to right, #a855f7, #ec4899, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 4px;
+            letter-spacing: 0.5px;
+        }
+
+        .logo-area p {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* USER PROFILE WALLET WIDGET */
+        .wallet-widget {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 14px;
+            font-size: 0.85rem;
+        }
+        .wallet-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 6px;
+        }
+        .points-badge { color: #f59e0b; font-weight: bold; font-size: 1rem; }
+
+        /* TAB INTERFACE MODES */
+        .tab-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            background: rgba(0,0,0,0.2);
+            padding: 4px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 10px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            background: var(--accent-color);
+            color: #fff;
+        }
+
+        /* FORM CONTROLS */
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #cbd5e1;
+        }
+
+        select, textarea, input[type="text"], input[type="email"], input[type="number"], .file-uploader {
+            width: 100%;
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            color: #fff;
+            font-size: 0.9rem;
+            outline: none;
+        }
+        textarea { height: 100px; resize: none; }
+        select:focus, textarea:focus { border-color: var(--accent-color); }
+
+        .file-uploader {
+            border: 1px dashed var(--accent-color);
+            text-align: center;
+            cursor: pointer;
+            padding: 20px;
+            background: rgba(168, 85, 247, 0.02);
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+
+        /* CHIPS SELECTIONS */
+        .chip-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .chip {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border-color);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            color: #cbd5e1;
+        }
+        .chip.active {
+            border-color: var(--accent-color);
+            background: rgba(168, 85, 247, 0.1);
+            color: #fff;
+        }
+
+        .cost-calc-panel {
+            background: rgba(245, 158, 11, 0.04);
+            border: 1px dashed rgba(245, 158, 11, 0.2);
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 0.8rem;
+            color: #f59e0b;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            font-size: 0.95rem;
+        }
+        .btn-primary { background: var(--accent-color); color: white; }
+        .btn-primary:hover { background: var(--accent-hover); }
+        .btn-pay { background: var(--pay-color); color: white; margin-top: 10px; }
+        .btn-reward { background: var(--reward-color); color: white; }
+        .btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        /* STUDIO MAIN FEED PREVIEW */
+        .main-workspace {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .top-navbar {
+            height: 64px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+        }
+
+        .workspace-content {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            align-items: center;
+        }
+
+        .content-card {
+            width: 100%;
+            max-width: 800px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px;
+            position: relative;
+        }
+
+        .video-box {
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-top: 15px;
+        }
+        .video-box iframe { width: 100%; height: 100%; border: none; }
+
+        .loader {
+            display: none;
+            border: 4px solid var(--border-color);
+            border-top: 4px solid var(--accent-color);
+            border-radius: 50%;
+            width: 40px; height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* PAYMENT GATEWAY OVERLAY */
+        .payment-overlay {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(6, 9, 19, 0.98);
+            border-radius: 16px;
+            z-index: 50;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 30px;
+            text-align: center;
+        }
+        .qr-frame { border: 4px solid #fff; border-radius: 8px; background: #fff; padding: 6px; margin: 15px 0; }
+
+        .close-btn {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 10px;
+            font-size: 0.8rem;
+        }
+    </style>
+    <script src="https://www.youtube.com/iframe_api"></script>
+</head>
+<body>
+
+    <!-- USER ONBOARDING GATEWAY -->
+    <div class="auth-overlay" id="authScreen">
+        <div class="auth-card">
+            <h2>👋 Welcome to Aivora Studio</h2>
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin: 10px 0 25px 0;">Sign up your dashboard deployment identity profile to begin rendering custom frames.</p>
+            <div class="form-group" style="text-align: left; margin-bottom: 15px;">
+                <label>Developer/User Email:</label>
+                <input type="email" id="userEmailInput" placeholder="name@domain.com" required>
+            </div>
+            <button class="btn btn-primary" onclick="handleUserSignUp()">Initialize Studio Workstation</button>
+        </div>
+    </div>
+
+    <!-- MAIN APP WRAPPER -->
+    <div class="app-container">
+        
+        <!-- SIDEBAR PARAMETER PANEL -->
+        <aside class="sidebar">
+            <div class="logo-area">
+                <h1>Aivora</h1>
+                <p>Engine Workspace Hub • v2.5</p>
+            </div>
+
+            <!-- WALLET REGION -->
+            <div class="wallet-widget">
+                <div style="color: var(--text-muted); font-size: 0.75rem;" id="accountBadge">Profile: Active Session</div>
+                <div class="wallet-row">
+                    <span>Wallet Credits:</span>
+                    <span class="points-badge"><span id="userPoints">0</span> Credits</span>
+                </div>
+                <div class="wallet-row" style="opacity: 0.7; font-size:0.75rem;">
+                    <span>Value Pool:</span>
+                    <span>₹<span id="userRupees">0.00</span> INR</span>
+                </div>
+            </div>
+
+            <!-- GENERATION METHOD MODES -->
+            <div class="tab-group">
+                <button class="tab-btn active" id="modeTextBtn" onclick="switchGenerationMode('text')">Text to Video</button>
+                <button class="tab-btn" id="modeImageBtn" onclick="switchGenerationMode('image')">Image to Video</button>
+            </div>
+
+            <!-- IMAGE SOURCE BLOCK -->
+            <div class="form-group" id="imageInputGroup" style="display: none;">
+                <label>Upload Source Frame Asset:</label>
+                <div class="file-uploader" onclick="alert('Asset staging layer complete! Image attached to generator.')">
+                    🖼️ Drop image asset here or browse
+                </div>
+            </div>
+
+            <!-- TEXT SCRIPT BLOCK -->
+            <div class="form-group">
+                <label>Prompt Description Script:</label>
+                <textarea id="prompt" placeholder="Describe your masterpiece scene details..."></textarea>
+            </div>
+
+            <!-- CORE RE-MODEL SELECTION -->
+            <div class="form-group">
+                <label>AI Synthesis Model Core:</label>
+                <select id="modelCoreSelect">
+                    <option value="aivora-flagship">Aivora Flagship v2.5 (High Consistency)</option>
+                    <option value="sora2">Sora Engine Gen-2 (Ultra Cinematic)</option>
+                    <option value="kling3">Kling AI 3.0 (Hyper-Realistic Architecture)</option>
+                </select>
+            </div>
+
+            <!-- ASPECT RATIO GRID CHIPS -->
+            <div class="form-group">
+                <label>Cinematic Aspect Ratio:</label>
+                <div class="chip-grid">
+                    <div class="chip active" onclick="selectChip(this, '16:9')">16:9 (Landscape)</div>
+                    <div class="chip" onclick="selectChip(this, '9:16')">9:16 (Shorts/TikTok)</div>
+                    <div class="chip" onclick="selectChip(this, '1:1')">1:1 (Square Feed)</div>
+                </div>
+            </div>
+
+            <!-- TIMELINE RUN DURATION -->
+            <div class="form-group">
+                <label>Sequence Duration (Seconds):</label>
+                <input type="number" id="videoDuration" value="5" min="1" max="15" oninput="calculateDynamicCost()">
+            </div>
+
+            <!-- BILLING ESTIMATION WIDGET -->
+            <div class="cost-calc-panel" id="costTextPreview">
+                Estimated Cost: 2 Credits for a 5-second video.
+            </div>
+
+            <button class="btn btn-primary" id="generateBtn" onclick="generateVideo()">🚀 Generate AI Sequence</button>
+        </aside>
+
+        <!-- MAIN MONITOR/REFILL DASHBOARD PANELS -->
+        <main class="main-workspace">
+            <header class="top-navbar">
+                <div style="font-weight: 700; font-size: 1.1rem;">Aivora Operations Board</div>
+                <div style="font-size: 0.8rem; color: var(--text-muted);">Status Code: 200 OK Node Connected</div>
+            </header>
+
+            <div class="workspace-content">
+                
+                <!-- MONITOR DISPLAY OUTPUT BOX -->
+                <div class="content-card" style="display: block; min-height: 200px;">
+                    <h3 style="font-size:1.1rem; margin-bottom:10px;">📺 Render Output Monitor Feed</h3>
+                    <div class="loader" id="loader"></div>
+                    <div id="outputBox" style="text-align: center; color: var(--text-muted); padding: 40px 0;">
+                        No clip compiled yet. Configure parameters and click generate to process frames.
+                    </div>
+                </div>
+
+                <!-- INTEGRATED WALLET CONTROL MATRIX -->
+                <div class="content-card">
+                    <h3 style="font-size:1.1rem; margin-bottom:4px;">⚡ Token Credit Matrix Center</h3>
+                    <p style="color:var(--text-muted); font-size:0.8rem; margin-bottom:20px;">Top up your profile node balance instantly via local direct checkout gateways, or claim watch-to-earn nodes.</p>
+                    
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
+                        
+                        <!-- PREMIUM GATEWAY WIDGET CARD -->
+                        <div style="background: rgba(236, 72, 153, 0.03); border: 1px solid rgba(236, 72, 153, 0.15); border-radius: 12px; padding:16px; position: relative;">
+                            <h4 style="font-size:0.9rem; color: var(--pay-color); margin-bottom:6px;">Option 1: Node Premium Recharge</h4>
+                            <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:12px;">Add exactly 100 Generation Credits directly into your token runtime balance using instant UPI QR protocols.</p>
+                            <button class="btn btn-pay" onclick="openPaymentGateway()">Buy 100 Credits (₹5.00)</button>
+
+                            <!-- LOCAL EMBEDDED POPUP CHECKOUT INTERFACE -->
+                            <div class="payment-overlay" id="payBoxOverlay">
+                                <h3 style="font-size:1.1rem; color:#fff;">🔒 Protected Unified Node Gate</h3>
+                                <div id="gatewayStatus" style="width: 100%;"></div>
+                                
+                                <div id="paymentTrackingForm" style="width: 100%; text-align: left; margin: 10px 0;">
+                                    <label style="font-size: 0.75rem; color: #94a3b8;">Enter Bank UTR / UPI Transaction Reference Token:</label>
+                                    <input type="text" id="utrNumberInput" style="margin-top:4px;" placeholder="e.g. 429302948201" required>
+                                </div>
+                                <div class="loader" id="payLoader"></div>
+                                <button class="btn btn-reward" id="confirmPayBtn" style="display:none;" onclick="verifyPaymentSequence()">Finalize Transaction Ledger</button>
+                                <button class="close-btn" onclick="document.getElementById('payBoxOverlay').style.display='none';">Dismiss Gate</button>
+                            </div>
+                        </div>
+
+                        <!-- REWARD MODULE WIDGET CARD -->
+                        <div style="background: rgba(16, 185, 129, 0.03); border: 1px solid rgba(16, 185, 129, 0.15); border-radius: 12px; padding:16px;">
+                            <h4 style="font-size:0.9rem; color: var(--reward-color); margin-bottom:6px;">Option 2: Ad-Support Allocation</h4>
+                            <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:12px;">Earn a batch of +20 Credits for free by looping our network video player continuously for 10 minutes.</p>
+                            <div class="video-box" style="margin: 10px 0 10px 0; height: 80px;"><div id="securePlayer"></div></div>
+                            <div style="font-size:0.75rem; margin-bottom:8px; color:#f59e0b;">Remaining Tracker: <span id="countdown">600 seconds</span></div>
+                            <button class="btn btn-reward" id="claimBtn" style="background:#334155;" disabled>Initialize Loop Node Session</button>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- MAIN CONTROL CORE LOGIC SCRIPT -->
+    <script>
+        let currentPoints = 0;
+        let globalSecondsRate = 2.5; // Custom Aivora calculation rate (e.g., 2.5s per Credit)
+        let watchTimeMax = 600; 
+        let watchTimeLeft = watchTimeMax;
+        let timerActive = false;
+        let intervalTracker;
+        let ytPlayer; 
+        let currentVideoId = "IfEx1B-25EA"; 
+        let registeredUserEmail = "";
+        let selectedAspectRatio = "16:9";
+        let activeGenerationMode = "text";
+
+        // CONFIGURATION PARAMETERS - INSERT YOUR BANK ASSETS RIGHT HERE
+        // ==========================================================
+        let upiAddress = "yourupiid@upi"; // <--- CHANGE THIS TO YOUR GENUINE UPI ID (e.g. name@okhdfc)
+        let cost = "5.00";                 // Transaction processing fee amount
+        let businessName = "ankit";       // <--- CHANGE THIS TO YOUR BANK DISCOVERY IDENTITY NAME
+        // ==========================================================
+
+        function handleUserSignUp() {
+            const emailInput = document.getElementById('userEmailInput').value.trim();
+            if (emailInput === "" || !emailInput.includes("@")) {
+                alert("Please enter a valid developer dashboard email profile!");
+                return;
+            }
+            registeredUserEmail = emailInput;
+            document.getElementById('accountBadge').innerText = `Profile Node: ${registeredUserEmail}`;
+            document.getElementById('authScreen').style.display = 'none';
+            saveLogToDevice(`[REGISTRATION] Target initialized for account: ${registeredUserEmail} at ${new Date().toLocaleString()}`);
+        }
+
+        function saveLogToDevice(textMessage) {
+            const blob = new Blob([textMessage + "\n"], { type: "text/plain" });
+            const anchor = document.createElement("a");
+            anchor.download = "aivora_studio_payments_log.txt";
+            anchor.href = window.URL.createObjectURL(blob);
+            anchor.target = "_blank";
+            anchor.style.display = "none";
+            document.body.appendChild(anchor);
+            anchor.click();
+            document.body.removeChild(anchor);
+        }
+
+        function switchGenerationMode(mode) {
+            activeGenerationMode = mode;
+            document.getElementById('modeTextBtn').classList.toggle('active', mode === 'text');
+            document.getElementById('modeImageBtn').classList.toggle('active', mode === 'image');
+            document.getElementById('imageInputGroup').style.display = mode === 'image' ? 'flex' : 'none';
+        }
+
+        function selectChip(element, ratio) {
+            const chips = element.parentElement.querySelectorAll('.chip');
+            chips.forEach(c => c.classList.remove('active'));
+            element.classList.add('active');
+            selectedAspectRatio = ratio;
+        }
+
+        function calculateDynamicCost() {
+            const seconds = parseInt(document.getElementById('videoDuration').value) || 0;
+            const pointsNeeded = Math.ceil(seconds / globalSecondsRate);
+            document.getElementById('costTextPreview').innerText = `Estimated Cost: ${pointsNeeded} Credits (₹${(pointsNeeded * 0.05).toFixed(2)}) for a ${seconds}-second video sequence.`;
+            return pointsNeeded;
+        }
+
+        function onYouTubeIframeAPIReady() {
+            ytPlayer = new YT.Player('securePlayer', {
+                height: '100%', width: '100%', videoId: currentVideoId,
+                playerVars: { 'playsinline': 1, 'rel': 0, 'modestbranding': 1, 'loop': 0 },
+                events: { 'onStateChange': handlePlayerStateChange }
+            });
+        }
+
+        function handlePlayerStateChange(event) {
+            if (event.data == YT.PlayerState.PLAYING) {
+                if (!timerActive && watchTimeLeft > 0) startWatchTimerLoop();
+            } else {
+                stopWatchTimerLoop();
+            }
+        }
+
+        function startWatchTimerLoop() {
+            timerActive = true;
+            const claimBtn = document.getElementById('claimBtn');
+            claimBtn.disabled = true; claimBtn.style.background = "#eab308"; claimBtn.style.color = "#000";
+            claimBtn.innerText = "Tracking Runtime Stream Sessions...";
+
+            intervalTracker = setInterval(() => {
+                watchTimeLeft--;
+                if (watchTimeLeft > 0) {
+                    document.getElementById('countdown').innerText = watchTimeLeft + " seconds";
+                } else {
+                    clearInterval(intervalTracker);
+                    timerActive = false;
+                    document.getElementById('countdown').innerText = "Loop Cycle Complete!";
+                    claimBtn.disabled = false; claimBtn.innerText = "Claim +20 Credits Allocation 🎉";
+                    claimBtn.style.background = "var(--reward-color)"; claimBtn.style.color = "#fff";
+                }
+            }, 1000);
+        }
+
+        function stopWatchTimerLoop() {
+            clearInterval(intervalTracker);
+            timerActive = false;
+            if (watchTimeLeft > 0) {
+                const claimBtn = document.getElementById('claimBtn');
+                claimBtn.disabled = true; claimBtn.style.background = "#334155"; claimBtn.style.color = "var(--text-muted)";
+                claimBtn.innerText = "Playback Halted - Resume Streams";
+            }
+        }
+
+        document.getElementById('claimBtn').addEventListener('click', function() {
+            if(!this.disabled && watchTimeLeft <= 0) {
+                currentPoints += 20;
+                updateUIVals();
+                alert("Allocation node deployed! +20 Credits successfully added.");
+                watchTimeLeft = watchTimeMax;
+                document.getElementById('countdown').innerText = `${watchTimeMax} seconds`;
+                this.disabled = true; this.style.background = "#334155";
+                this.innerText = "Initialize Loop Node Session";
+                if(ytPlayer && ytPlayer.stopVideo) ytPlayer.stopVideo();
+            }
+        });
+
+        function openPaymentGateway() {
+            const overlay = document.getElementById('payBoxOverlay');
+            const loader = document.getElementById('payLoader');
+            const confirmBtn = document.getElementById('confirmPayBtn');
+            const statusText = document.getElementById('gatewayStatus');
+            const trackingForm = document.getElementById('paymentTrackingForm');
+
+            overlay.style.display = 'flex';
+            loader.style.display = 'none';
+            confirmBtn.style.display = 'inline-block';
+            trackingForm.style.display = 'block';
+            document.getElementById('utrNumberInput').value = "";
+
+            let qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=upi://pay?pa=${upiAddress}&pn=${encodeURIComponent(businessName)}&am=${cost}&cu=INR`;
+
+            statusText.innerHTML = `
+                <p style="color: #94a3b8; font-size: 0.8rem; margin-bottom: 8px;">
+                    Scan the processing token using any default Indian banking application terminal (GPay, Paytm, PhonePe) to securely clear the settlement for <strong>${businessName}</strong>.
+                </p>
+                <div class="qr-frame">
+                    <img src="${qrCodeUrl}" alt="UPI Dynamic QR Node" style="display:block; max-width:140px; margin:auto;"/>
+                </div>
+                <p style="color: var(--pay-color); font-weight: bold; font-size: 1rem;">Settlement Amount: ₹${cost} INR</p>
+            `;
+        }
+
+        function verifyPaymentSequence() {
+            const utrVal = document.getElementById('utrNumberInput').value.trim();
+            if (utrVal === "") {
+                return alert("You must provide your payment transaction reference code to clear verification nodes!");
+            }
+
+            const statusText = document.getElementById('gatewayStatus');
+            const loader = document.getElementById('payLoader');
+            const confirmBtn = document.getElementById('confirmPayBtn');
+            const trackingForm = document.getElementById('paymentTrackingForm');
+
+            confirmBtn.style.display = 'none';
+            trackingForm.style.display = 'none';
+            
+            statusText.innerHTML = `
+                <h4 style="color: #f59e0b; margin-bottom: 6px;">🔄 Auditing Node Records...</h4>
+                <p style="color: #94a3b8; font-size: 0.75rem;">Mapping ledger records via local hooks. Please sit back.</p>
+            `;
+            loader.style.display = 'block';
+
+            setTimeout(() => {
+                loader.style.display = 'none';
+                currentPoints += 100;
+                updateUIVals();
+                saveLogToDevice(`[PAYMENT VERIFIED] Profile: ${registeredUserEmail} | Reference Hash Token: ${utrVal} | Credited: 100 Pt | Timestamp: ${new Date().toLocaleString()}`);
+                document.getElementById('payBoxOverlay').style.display = 'none';
+                alert(`Ledger Node Clear! Token Reference: ${utrVal} parsed. 100 Allocation credits deployed to your workspace.`);
+            }, 3500); 
+        }
+
+        function updateUIVals() {
+            document.getElementById('userPoints').innerText = currentPoints;
+            document.getElementById('userRupees').innerText = (currentPoints * 0.05).toFixed(2);
+        }
+
+        function generateVideo() {
+            const promptInput = document.getElementById('prompt').value.trim();
+            const secondsInput = parseInt(document.getElementById('videoDuration').value) || 0;
+            const modelCore = document.getElementById('modelCoreSelect').value;
+            const generateBtn = document.getElementById('generateBtn');
+            const loader = document.getElementById('loader');
+            const outputBox = document.getElementById('outputBox');
+
+            if (secondsInput <= 0) return alert("Define a structurally valid duration!");
+            const pointsCost = calculateDynamicCost();
+            if (currentPoints < pointsCost) return alert(`Insufficient token balance! Processing this compilation requires ${pointsCost} Credits.`);
+            if (promptInput === "") return alert("Please build a prompt instruction script first!");
+
+            currentPoints -= pointsCost;
+            updateUIVals();
+            generateBtn.disabled = true; loader.style.display = "block"; outputBox.style.display = "none";
+
+            setTimeout(() => {
+                loader.style.display = "none"; outputBox.style.display = "block";
+                outputBox.innerHTML = `
+                    <div style="text-align:left; max-width:650px; margin:auto;">
+                        <h4 style="color:#fff; margin-bottom: 8px;">Success! ${secondsInput}-Second Video Frame Generated</h4>
+                        <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:12px;">Compiled via Model Core [${modelCore.toUpperCase()}] | Aspect Layout Ratio: [${selectedAspectRatio}]</p>
+                        <div class="video-box">
+                            <iframe src="https://www.youtube.com/embed/${currentVideoId}?autoplay=1" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+                        </div>
+                    </div>
+                `;
+                generateBtn.disabled = false;
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
